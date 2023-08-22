@@ -18,7 +18,7 @@ cluster = pymongo.MongoClient('mongodb+srv://admin:admin123@cluster0.7fnfgrt.mon
 db = cluster['Interpol']
 
 terroristas_collection = db['terroristas']
-
+agentes_collection = db['agentes']
 
 class Terrorista(BaseModel):
     id: int
@@ -29,6 +29,13 @@ class Terrorista(BaseModel):
     nacionalidad: str
     paises_buscados: int
 
+class Agente(BaseModel):
+    id: int
+    nombre: str
+    edad: int
+    rango: str
+    nacionalidad: str
+    paises_asignados: int
 
 @app.get("/",tags=['Home'])
 async def root():
@@ -71,3 +78,10 @@ def update_terrorist(id: str, updated_terrorist: Terrorista) -> JSONResponse:
         return JSONResponse(content=updated_terrorist.dict(), status_code=200)
     else:
         raise HTTPException(status_code=404, detail="Terrorista no encontrado")
+    
+@app.post("/agentes/", response_model=Agente, tags=['Agentes'])
+def register_agent(agente: Agente) -> Agente:
+    agent_data = agente.dict()
+    inserted_agent = agentes_collection.insert_one(agent_data)
+    agente.id = str(inserted_agent.inserted_id)
+    return JSONResponse(content=jsonable_encoder(agente), status_code=200)
