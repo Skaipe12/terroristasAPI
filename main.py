@@ -85,3 +85,22 @@ def register_agent(agente: Agente) -> Agente:
     inserted_agent = agentes_collection.insert_one(agent_data)
     agente.id = str(inserted_agent.inserted_id)
     return JSONResponse(content=jsonable_encoder(agente), status_code=200)
+
+@app.get("/agentes/", tags=["Agentes"], response_model=List[Agente])
+def get_agentes() -> List[Agente]:
+    agentes = list(agentes_collection.find({}))
+    if agentes:
+        for agente in agentes:
+            agente["_id"] = str(agente["_id"])
+        return JSONResponse(content=agentes, status_code=200)
+    else:
+        return JSONResponse(content={"message":"Sin agentes encontrados"}, status_code=404)
+
+@app.delete('/agentes/{id}', tags=['Agentes'], status_code=200, response_model=Agente)
+def delete_agent(id: str) -> JSONResponse:
+    agente = agentes_collection.find_one_and_delete({"_id": ObjectId(id)})
+    if agente:
+        deleted_agent = Agente(**agente)
+        return JSONResponse(content=deleted_agent.dict(), status_code=200)
+    else:
+        raise JSONResponse(content={"message":"Agente no encontrado"}, status_code=404)
